@@ -519,44 +519,56 @@ namespace doubanOAuth
         }
 
         /// <summary>
-        /// 用户给某本图书写笔记(上传图片待测试)
+        /// 用户给某本图书写笔记
         /// </summary>
         /// <param name="id">图书id</param>
         /// <param name="content">笔记内容(多余15字)</param>
         /// <param name="page">(page/chapter)页码</param>
         /// <param name="chapter">(page/chapter)章节名</param>
         /// <param name="privacy">(可选)隐私设置(值为'private'为设置仅自己可见)</param>
+        /// <param name="imagePath">(可选)图片路径</param>
         /// <returns>图书笔记</returns>
-        public static BkAnnotation BkPostAnno(string id, string content, int? page = null, string chapter = null, string privacy = null)
+        public static BkAnnotation BkPostAnno(string id, string content, int? page = null, string chapter = null, string privacy = null, List<string> imagePath = null)
         {
             string url = Utilities.CreateUrl(Common.BKPOSTANNO_ID, id);
-            StringBuilder builder = new StringBuilder();
-            builder.Append("content", content);
-            builder.Append("page", page.ToString());
-            builder.Append("chapter", chapter);
-            builder.Append("privacy", privacy);
-            string result = Utilities.RequestPost(url, builder.ToString());
+            FormData fd = new FormData();
+            fd.AddParam("content", content);
+            fd.AddParam("page", page);
+            fd.AddParam("chapter", chapter);
+            fd.AddParam("privacy", privacy);
+            if (imagePath != null)
+            {
+                for (int i = 0; i < imagePath.Count; i++)
+                    fd.AddParam((i + 1).ToString(), "image/jpeg", imagePath[i]);
+            }
+            string result = Utilities.RequestPostFile(url, fd.GetBytes());
             return (BkAnnotation)Utilities.JsonDeserialize<BkAnnotation>(result);
         }
 
         /// <summary>
-        /// 用户修改某篇笔记(上传图片待测试)
+        /// 用户更新某篇笔记
         /// </summary>
         /// <param name="id">图书id</param>
         /// <param name="content">笔记内容(多余15字)</param>
         /// <param name="page">(page/chapter)页码</param>
         /// <param name="chapter">(page/chapter)章节名</param>
         /// <param name="privacy">(可选)隐私设置(值为'private'为设置仅自己可见)</param>
+        /// <param name="imagePath">(可选)图片路径</param>
         /// <returns>图书笔记</returns>
-        public static BkAnnotation BkEditAnno(string id, string content, int? page = null, string chapter = null, string privacy = null)
+        public static BkAnnotation BkRefreshAnno(string id, string content, int? page = null, string chapter = null, string privacy = null, List<string> imagePath = null)
         {
             string url = Utilities.CreateUrl(Common.BKANNOOP_ID, id);
-            StringBuilder builder = new StringBuilder();
-            builder.Append("content", content);
-            builder.Append("page", page);
-            builder.Append("chapter", chapter);
-            builder.Append("privacy", privacy);
-            string result = Utilities.RequestPut(url, builder.ToString());
+            FormData fd = new FormData();
+            fd.AddParam("content", content);
+            fd.AddParam("page", page);
+            fd.AddParam("chapter", chapter);
+            fd.AddParam("privacy", privacy);
+            if (imagePath != null)
+            {
+                for (int i = 0; i < imagePath.Count; i++)
+                    fd.AddParam((i + 1).ToString(), "image/jpeg", imagePath[i]);
+            }
+            string result = Utilities.RequestPutFile(url, fd.GetBytes());
             return (BkAnnotation)Utilities.JsonDeserialize<BkAnnotation>(result);
         }
         

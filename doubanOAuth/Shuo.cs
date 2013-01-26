@@ -283,25 +283,26 @@ namespace doubanOAuth
     public static partial class API
     {
         /// <summary>
-        /// 发送一条广播(发图待测试)
+        /// 发送一条广播
         /// </summary>
         /// <param name="text">广播文本内容</param>
         /// <param name="recTitle">(可选)推荐网址的标题</param>
         /// <param name="recUrl">(可选)推荐网址的href</param>
         /// <param name="recDesc">(可选)推荐网址的描述</param>
         /// <param name="rec_image">(可选)推荐网址的附图url</param>
-        /// <param name="image">(可选)我说的图(有image的情况下rec系列参数都会被忽略)</param>
+        /// <param name="imagePath">(可选)我说的图路径(有image的情况下rec系列参数都会被忽略)</param>
         /// <returns>广播信息</returns>
-        public static ShuoInfo ShuoPostShuo(string text, string recTitle = null, string recUrl = null, string recDesc = null, string recImage = null, object image = null)
+        public static ShuoInfo ShuoPostShuo(string text, string recTitle = null, string recUrl = null, string recDesc = null, string recImage = null, string imagePath = null)
         {
             string url = Utilities.CreateUrl(Common.SHUOPOST);
-            StringBuilder builder = new StringBuilder();
-            builder.Append("text", text);
-            builder.Append("rec_title", recTitle);
-            builder.Append("rec_url", recUrl);
-            builder.Append("rec_desc", recDesc);
-            builder.Append("rec_image", recImage);
-            string result = Utilities.RequestPost(url, builder.ToString());
+            FormData fd = new FormData();
+            fd.AddParam("text", text);
+            fd.AddParam("rec_title", recTitle);
+            fd.AddParam("rec_url", recUrl);
+            fd.AddParam("rec_desc", recDesc);
+            fd.AddParam("rec_image", recImage);
+            fd.AddParam("image", "image/jpeg", imagePath);
+            string result = Utilities.RequestPostFile(url, fd.GetBytes());
             return (ShuoInfo)Utilities.JsonDeserialize<ShuoInfo>(result);
         }
 

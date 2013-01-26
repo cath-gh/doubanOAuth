@@ -1,12 +1,28 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.IO;
+using System.Text;
 
 namespace doubanOAuth
 {
     public static class Common
     {
         #region Pool
-        public static Error LastError { get; set; }
+        public delegate void ErrorEventHandler(Error error);
+        public static event ErrorEventHandler ErrorCatched;
+        private static Error _LastError;
+        public static Error LastError
+        {
+            get { return _LastError; }
+            set
+            {
+                _LastError = value;
+                if (ErrorCatched != null)
+                {
+                    ErrorCatched(_LastError);
+                }
+            }
+        }
         public static string APIKey { get; set; }
         public static string Secret { get; set; }
         public static string RedirectUri { get; set; }
@@ -25,6 +41,9 @@ namespace doubanOAuth
         internal const string USERAGGENT = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11";
         internal const string REFERER = "http://www.douban.com/";
         internal const string REFERER_SELF = "http://cath.dnip.net/";
+        internal const string CONTENTTYPEFORM = "multipart/form-data; boundary=----doubanOAuth by Cath";
+        internal const string BOUNDARYSTART = "------doubanOAuth by Cath";
+        internal const string BOUNDARYEND = "------doubanOAuth by Cath--";
         #endregion
 
         #region UriBuilder
@@ -194,6 +213,68 @@ namespace doubanOAuth
         internal int Start { get; private set; }
         [JsonProperty("total")]
         internal int Total { get; private set; }
+    }
+
+    internal class FormData
+    {
+        private MemoryStream ms;
+
+        public FormData()
+        {
+            ms = new MemoryStream();
+        }
+
+        public void AddParam(string key, object value)
+        {
+            if (value != null)
+            {
+                StringBuilder builder = new StringBuilder();
+                builder.Append(Common.BOUNDARYSTART);
+                builder.Append("\r\n");
+                builder.Append(String.Format("Content-Disposition: form-data; name=\"{0}\"", key));
+                builder.Append("\r\n\r\n");
+                builder.Append(value.ToString());
+                builder.Append("\r\n");
+                byte[] buf = Encoding.UTF8.GetBytes(builder.ToString());
+                ms.Write(buf, 0, buf.Length);
+            }
+        }
+
+        public void AddParam(string key, string contentType, string path)
+        {
+            if (path != null)
+            {
+                StringBuilder builder = new StringBuilder();
+                builder.Append(Common.BOUNDARYSTART);
+                builder.Append("\r\n");
+                builder.Append(String.Format("Content-Disposition: form-data; name=\"{0}\"; filename=\"{1}\"", key, path));
+                builder.Append("\r\n");
+                builder.Append(String.Concat("Content-Type: ", contentType));
+                builder.Append("\r\n\r\n");
+                byte[] buf1 = Encoding.UTF8.GetBytes(builder.ToString());
+                ms.Write(buf1, 0, buf1.Length);
+                byte[] buf2;
+                using (FileStream fs = new FileStream(path, FileMode.Open))
+                {
+                    buf2 = new byte[fs.Length];
+                    fs.Read(buf2, 0, (int)fs.Length);
+                }
+                ms.Write(buf2, 0, buf2.Length);
+                byte[] buf3 = Encoding.UTF8.GetBytes("\r\n");
+                ms.Write(buf3, 0, buf3.Length);
+            }
+        }
+
+        public byte[] GetBytes()
+        {
+            byte[] buf = Encoding.UTF8.GetBytes(String.Concat(Common.BOUNDARYEND, "\r\n"));
+            ms.Write(buf, 0, buf.Length);
+            byte[] buffer = new byte[ms.Length];
+            ms.Seek(0, SeekOrigin.Begin);
+            ms.Read(buffer, 0, (int)ms.Length);
+            ms.Close();
+            return buffer;
+        }
     }
 
     /// <summary>

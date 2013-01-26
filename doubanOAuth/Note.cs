@@ -161,30 +161,48 @@ namespace doubanOAuth
         }
 
         /// <summary>
-        /// 增加一条日记(传图待测试)
+        /// 增加一条日记
         /// </summary>
         /// <param name="title">日记标题</param>
         /// <param name="privacy">隐私控制(public/friend/private)</param>
         /// <param name="canReply">是否允许回复</param>
         /// <param name="content">日记内容, 使用"<图片p_pid>"伪tag引用图片, 如果含链接, 使用html的链接标签格式, 或者直接使用网址</param>
-        /// <param name="pids">(可选)上传的图片pid本地编号, 使用前缀"p_"</param>
+        /// <param name="pids">(可选)上传的图片pid本地编号</param>
         /// <param name="layoutPid">(可选)对应pid的排版</param>
         /// <param name="descPid">(可选)对应pid的图注</param>
         /// <param name="imagePid">(可选)对应pid的图片内容</param>
         /// <returns>日记信息</returns>
-        public static NoteInfo NotePostNote(string title, string privacy, bool canReply, string content, string pids = null, string layoutPid = null, string descPid = null, string imagePid = null)
+        public static NoteInfo NotePostNote(string title, string privacy, bool canReply, string content, List<int> pids = null, List<string> layoutPid = null, List<string> descPid = null, List<string> imagePid = null)
         {
             string url = Utilities.CreateUrl(Common.NOTEPOSTNOTE);
-            StringBuilder builder = new StringBuilder();
-            builder.Append("title", title);
-            builder.Append("privacy", privacy);
-            builder.Append("can_reply", canReply);
-            builder.Append("content", content);
-            builder.Append("pids", pids);
-            builder.Append("layout_pid", layoutPid);
-            builder.Append("desc_pid", descPid);
-            builder.Append("image_pid", imagePid);
-            string result = Utilities.RequestPost(url, builder.ToString());
+            FormData fd = new FormData();
+            fd.AddParam("title", title);
+            fd.AddParam("privacy", privacy);
+            fd.AddParam("can_reply", canReply);
+            fd.AddParam("content", content);
+            if (pids != null)
+            {
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < pids.Count; i++)
+                    builder.Append(String.Concat(",p_", pids[i].ToString()));
+                fd.AddParam("pids", builder.Remove(0, 1).ToString());
+            }
+            if (layoutPid != null)
+            {
+                for (int i = 0; i < layoutPid.Count; i++)
+                    fd.AddParam(String.Concat("layout_", pids[i]), layoutPid[i]);
+            }
+            if (descPid != null)
+            {
+                for (int i = 0; i < descPid.Count; i++)
+                    fd.AddParam(String.Concat("desc_", pids[i]), descPid[i]);
+            }
+            if (imagePid != null)
+            {
+                for (int i = 0; i < imagePid.Count; i++)
+                    fd.AddParam(String.Concat("image_", pids[i]), "image/jpeg", imagePid[i]);
+            }
+            string result = Utilities.RequestPostFile(url, fd.GetBytes());
             return (NoteInfo)Utilities.JsonDeserialize<NoteInfo>(result);
         }
 
@@ -196,47 +214,83 @@ namespace doubanOAuth
         /// <param name="privacy">隐私控制(public, friend, private)</param>
         /// <param name="canReply">是否允许回复</param>
         /// <param name="content">日记内容, 使用"<图片p_pid>"伪tag引用图片, 如果含链接, 使用html的链接标签格式, 或者直接使用网址</param>
-        /// <param name="pids">(可选)上传的图片pid本地编号, 使用前缀"p_"</param>
+        /// <param name="pids">(可选)上传的图片pid本地编号</param>
         /// <param name="layoutPid">(可选)对应pid的排版</param>
         /// <param name="descPid">(可选)对应pid的图注</param>
         /// <param name="imagePid">(可选)对应pid的图片内容</param>
         /// <returns>日记信息</returns>
-        public static NoteInfo NoteRefreshNote(string id, string title, string privacy, bool canReply, string content, string pids = null, string layoutPid = null, string descPid = null, string imagePid = null)
+        public static NoteInfo NoteRefreshNote(string id, string title, string privacy, bool canReply, string content, List<int> pids = null, List<string> layoutPid = null, List<string> descPid = null, List<string> imagePid = null)
         {
             string url = Utilities.CreateUrl(Common.NOTEOP_ID, id);
-            StringBuilder builder = new StringBuilder();
-            builder.Append("title", title);
-            builder.Append("privacy", privacy);
-            builder.Append("can_reply", canReply);
-            builder.Append("content", content);
-            builder.Append("pids", pids);
-            builder.Append("layout_pid", layoutPid);
-            builder.Append("desc_pid", descPid);
-            builder.Append("image_pid", imagePid);
-            string result = Utilities.RequestPut(url, builder.ToString());
+            FormData fd = new FormData();
+            fd.AddParam("title", title);
+            fd.AddParam("privacy", privacy);
+            fd.AddParam("can_reply", canReply);
+            fd.AddParam("content", content);
+            if (pids != null)
+            {
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < pids.Count; i++)
+                    builder.Append(String.Concat(",p_", pids[i].ToString()));
+                fd.AddParam("pids", builder.Remove(0, 1).ToString());
+            }
+            if (layoutPid != null)
+            {
+                for (int i = 0; i < layoutPid.Count; i++)
+                    fd.AddParam(String.Concat("layout_", pids[i]), layoutPid[i]);
+            }
+            if (descPid != null)
+            {
+                for (int i = 0; i < descPid.Count; i++)
+                    fd.AddParam(String.Concat("desc_", pids[i]), descPid[i]);
+            }
+            if (imagePid != null)
+            {
+                for (int i = 0; i < imagePid.Count; i++)
+                    fd.AddParam(String.Concat("image_", pids[i]), "image/jpeg", imagePid[i]);
+            }
+            string result = Utilities.RequestPutFile(url, fd.GetBytes());
             return (NoteInfo)Utilities.JsonDeserialize<NoteInfo>(result);
         }
 
         /// <summary>
-        /// 上传照片到日记(待测试)
+        /// 上传照片到日记
         /// </summary>
         /// <param name="id">日记id</param>
         /// <param name="content">(可选)日记内容, 使用"<图片p_pid>"伪tag引用图片, 如果含链接, 使用html的链接标签格式, 或者直接使用网址</param>
-        /// <param name="pids">(可选)上传的图片pid本地编号, 使用前缀"p_"</param>
+        /// <param name="pids">(可选)上传的图片pid本地编号</param>
         /// <param name="layoutPid">(可选)对应pid的排版</param>
         /// <param name="descPid">(可选)对应pid的图注</param>
         /// <param name="imagePid">(可选)对应pid的图片内容</param>
         /// <returns>日记信息</returns>
-        public static NoteInfo NotePostImage(string id, string content, string pids = null, string layoutPid = null, string descPid = null, string imagePid = null)
+        public static NoteInfo NotePostImage(string id, string content, List<int> pids = null, List<string> layoutPid = null, List<string> descPid = null, List<string> imagePid = null)
         {
             string url = Utilities.CreateUrl(Common.NOTEOP_ID, id);
-            StringBuilder builder = new StringBuilder();
-            builder.Append("content", content);
-            builder.Append("pids", pids);
-            builder.Append("layout_pid", layoutPid);
-            builder.Append("desc_pid", descPid);
-            builder.Append("image_pid", imagePid);
-            string result = Utilities.RequestPost(url, builder.ToString());
+            FormData fd = new FormData();
+            fd.AddParam("content", content);
+            if (pids != null)
+            {
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < pids.Count; i++)
+                    builder.Append(String.Concat(",p_", pids[i].ToString()));
+                fd.AddParam("pids", builder.Remove(0, 1).ToString());
+            }
+            if (layoutPid != null)
+            {
+                for (int i = 0; i < layoutPid.Count; i++)
+                    fd.AddParam(String.Concat("layout_", pids[i]), layoutPid[i]);
+            }
+            if (descPid != null)
+            {
+                for (int i = 0; i < descPid.Count; i++)
+                    fd.AddParam(String.Concat("desc_", pids[i]), descPid[i]);
+            }
+            if (imagePid != null)
+            {
+                for (int i = 0; i < imagePid.Count; i++)
+                    fd.AddParam(String.Concat("image_", pids[i]), "image/jpeg", imagePid[i]);
+            }
+            string result = Utilities.RequestPostFile(url, fd.GetBytes());
             return (NoteInfo)Utilities.JsonDeserialize<NoteInfo>(result);
         }
 

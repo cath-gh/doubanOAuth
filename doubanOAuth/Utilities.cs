@@ -33,7 +33,7 @@ namespace doubanOAuth
             }
         }
 
-        internal static string Request(string url, string method, string data = null, bool addAuth = false)
+        private static string Request(string url, string method, string data = null, bool addAuth = false)
         {
             try
             {
@@ -83,6 +83,44 @@ namespace doubanOAuth
         internal static string RequestDelete(string url)
         {
             return Request(url, "DELETE", addAuth: true);
+        }
+
+        private static string RequestFile(string method, string url, byte[] data)
+        {
+            try
+            {
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+                req.Proxy = null;
+                req.Headers.Add(Common.AuthHeader);
+                req.Accept = Common.ACCEPT;
+                req.ContentType = Common.CONTENTTYPEFORM;
+                req.UserAgent = Common.USERAGGENT;
+                req.Referer = Common.REFERER_SELF;
+                req.Method = method;
+                req.ContentLength = data.Length;
+                using (Stream requestStream = req.GetRequestStream())
+                    requestStream.Write(data, 0, data.Length);
+                using (HttpWebResponse res = (HttpWebResponse)req.GetResponse())
+                {
+                    using (StreamReader sr = new StreamReader(res.GetResponseStream(), Encoding.UTF8))
+                        return sr.ReadToEnd();
+                }
+            }
+            catch (WebException e)
+            {
+                Common.LastError = new Error(e);
+                return string.Empty;
+            }
+        }
+
+        internal static string RequestPostFile(string url, byte[] data)
+        {
+            return RequestFile("POST", url, data);
+        }
+
+        internal static string RequestPutFile(string url, byte[] data)
+        {
+            return RequestFile("PUT", url, data);
         }
 
         internal static T JsonDeserialize<T>(string json) where T : new()
