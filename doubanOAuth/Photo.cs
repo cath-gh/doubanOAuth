@@ -282,19 +282,19 @@ namespace doubanOAuth
         }
 
         /// <summary>
-        /// 上传照片(传图必须没戏啊)
+        /// 上传照片
         /// </summary>
         /// <param name="id">相册id</param>
-        /// <param name="image">照片名称</param>
+        /// <param name="imagePath">照片路径</param>
         /// <param name="desc">(可选)照片描述</param>
         /// <returns>照片信息</returns>
-        public static PhoInfo PhoPostPhoto(string id, string image = null, string desc = null)
+        public static PhoInfo PhoPostPhoto(string id, string imagePath, string desc = null)
         {
             string url = Utilities.CreateUrl(Common.PHOALBUMOP_ID, id);
-            StringBuilder builder = new StringBuilder();
-            builder.Append("image", image);
-            builder.Append("desc", desc);
-            string result = Utilities.RequestPost(url, builder.ToString());
+            FormData fd = new FormData();
+            fd.AddParam("desc", desc);
+            fd.AddParam("image", "image/jpeg", imagePath);
+            string result = Utilities.RequestPostFile(url, fd.GetBytes());
             return (PhoInfo)Utilities.JsonDeserialize<PhoInfo>(result);
         }
 
